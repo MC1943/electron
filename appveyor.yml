@@ -62,6 +62,10 @@ for:
           }
 
     build_script:
+      # resize initial partition
+      - ps: Get-Partition -DriveLetter C
+      - ps: Resize-Partition -DriveLetter C -Size (300GB)
+      - ps: Get-Partition -DriveLetter C
       - ps: |
           node script/yarn.js install --frozen-lockfile
           node script/doc-only-change.js --prNumber=$env:APPVEYOR_PULL_REQUEST_NUMBER --prBranch=$env:APPVEYOR_REPO_BRANCH
@@ -189,7 +193,7 @@ for:
           }
     on_finish:
       # Uncomment this lines to enable RDP
-      # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+      - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
       - cd C:\projects\src
       - if exist out\Default\windows_toolchain_profile.json ( appveyor-retry appveyor PushArtifact out\Default\windows_toolchain_profile.json )
       - if exist out\Default\dist.zip (appveyor-retry appveyor PushArtifact out\Default\dist.zip)
