@@ -41,6 +41,10 @@ vars = {
   'mac_xcode_version': 'default',
 
   'generate_location_tags': False,
+  
+  # ninja CIPD package version.
+  # https://chrome-infra-packages.appspot.com/p/infra/3pp/tools/ninja
+  'ninja_version': 'version:2@1.8.2.chromium.3',
 
   # To allow running hooks without parsing the DEPS tree
   'process_deps': True,
@@ -73,6 +77,15 @@ deps = {
   'src/third_party/nan': {
     'url': (Var("nodejs_git")) + '/nan.git@' + (Var("nan_version")),
     'condition': 'checkout_nan and process_deps',
+  },
+  'src/third_party/ninja': {
+    'packages': [
+      {
+        'package': 'infra/3pp/tools/ninja/${{platform}}',
+        'version': Var('ninja_version'),
+      }
+    ],
+    'dep_type': 'cipd',
   },
   'src/third_party/electron_node': {
     'url': (Var("nodejs_git")) + '/node.git@' + (Var("node_version")),
