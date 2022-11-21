@@ -54,13 +54,11 @@ app.whenReady().then(() => {
     const crashPath = path.join(__dirname, 'node-crash.js');
 
     console.log('About to fork child process...');
-    const fd = process.getFD();
-    const pid = process.getPID();
     console.log('FD: ', process.getFD(), 'PID: ', process.getPID());
-
     const child = childProcess.fork(crashPath,
-      [`--crashpadfd=${fd}`, `--crashpad-handler-pid=${pid}`],
-      { silent: true, stdio: ['inherit', 'inherit', 'inherit', 'ipc', fd] }
+      // [`--crashpadfd=${fd}`, `--crashpad-handler-pid=${pid}`],
+      // { silent: true, stdio: ['inherit', 'inherit', 'inherit', 'ipc', fd] }
+      { silent: true }
     );
 
     child.on('exit', () => {

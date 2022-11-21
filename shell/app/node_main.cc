@@ -14,11 +14,12 @@
 #include "base/base_switches.h"
 #include "base/command_line.h"
 #include "base/feature_list.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
-#include "base/strings/string_number_conversions.h"
 #include "base/task/thread_pool/thread_pool_instance.h"
 #include "base/threading/thread_task_runner_handle.h"
+#include "components/crash/core/app/crash_switches.h"
 #include "content/public/common/content_switches.h"
 #include "electron/electron_version.h"
 #include "gin/array_buffer.h"
@@ -111,26 +112,40 @@ v8::Local<v8::Value> GetParameters(v8::Isolate* isolate) {
 }
 
 int NodeMain(int argc, char* argv[]) {
+  LOG(ERROR) << "Initializing Node Main...";
   base::CommandLine::Init(argc, argv);
 
 #if BUILDFLAG(IS_WIN)
   v8_crashpad_support::SetUp();
 #endif
 
+#if !IS_MAS_BUILD()
 // TODO(deepak1556): Enable crashpad support on linux for
 // ELECTRON_RUN_AS_NODE processes.
 // Refs https://github.com/electron/electron/issues/36030
-
-// TODO: We need to flag the FD/PID for Linux here
-// to enable crashpad
-#if !IS_MAS_BUILD()
-  [[maybe_unused]] base::GlobalDescriptors* g_fds =
-    base::GlobalDescriptors::GetInstance();
+#if BUILDFLAG(IS_LINUX)
   int fd_;
+  pid_t pid_;
+  [[maybe_unused]] base::GlobalDescriptors* g_fds =
+      base::GlobalDescriptors::GetInstance();
+
   auto* command_line = base::CommandLine::ForCurrentProcess();
-  base::StringToInt(command_line->GetSwitchValueASCII(options::kCrashpadProcessFD),
-                  &fd_);
-  g_fds->Set(kCrashDumpSignal, fd_);
+  if (crash_reporter::GetHandlerSocket(&fd_, nullptr)) {
+    LOG(ERROR) << "fd_ (node_main.cc): " << std::to_string(fd_);
+    g_fds->Set(kCrashDumpSignal, fd_);
+  }
+
+  // See if the fd was properly set (TODO: Remove when verified)
+  int retrieved_fd = g_fds->Get(kCrashDumpSignal);
+  LOG(ERROR) << "Retrieved fd (node_main.cc): " << std::to_string(retrieved_fd);
+
+  // set pid for child process
+  if (crash_reporter::GetHandlerSocket(nullptr, &pid_)) {
+    command_line->AppendSwitchASCII(
+        crash_reporter::switches::kCrashpadHandlerPid,
+        base::NumberToString(pid_));
+  }
+#endif  // BUILDFLAG(IS_LINUX)
 
   ElectronCrashReporterClient::Create();
   crash_reporter::InitializeCrashpad(false, "node");
