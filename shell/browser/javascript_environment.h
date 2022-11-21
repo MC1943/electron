@@ -22,7 +22,8 @@ class MicrotasksRunner;
 // Manage the V8 isolate and context automatically.
 class JavascriptEnvironment {
  public:
-  explicit JavascriptEnvironment(uv_loop_t* event_loop);
+  explicit JavascriptEnvironment(uv_loop_t* event_loop,
+                                 bool setup_for_node = false);
   ~JavascriptEnvironment();
 
   // disable copy
@@ -41,7 +42,7 @@ class JavascriptEnvironment {
   static v8::Isolate* GetIsolate();
 
  private:
-  v8::Isolate* Initialize(uv_loop_t* event_loop);
+  v8::Isolate* Initialize(uv_loop_t* event_loop, bool setup_for_node);
   std::unique_ptr<node::MultiIsolatePlatform> platform_;
 
   v8::Isolate* isolate_;

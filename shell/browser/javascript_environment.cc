@@ -73,8 +73,9 @@ struct base::trace_event::TraceValue::Helper<
 
 namespace electron {
 
-JavascriptEnvironment::JavascriptEnvironment(uv_loop_t* event_loop)
-    : isolate_(Initialize(event_loop)),
+JavascriptEnvironment::JavascriptEnvironment(uv_loop_t* event_loop,
+                                             bool setup_for_node)
+    : isolate_(Initialize(event_loop, setup_for_node)),
       isolate_holder_(base::ThreadTaskRunnerHandle::Get(),
                       gin::IsolateHolder::kSingleThread,
                       gin::IsolateHolder::kAllowAtomicsWait,
@@ -247,7 +248,8 @@ class TracingControllerImpl : public node::tracing::TracingController {
   }
 };
 
-v8::Isolate* JavascriptEnvironment::Initialize(uv_loop_t* event_loop) {
+v8::Isolate* JavascriptEnvironment::Initialize(uv_loop_t* event_loop,
+                                               bool setup_for_node) {
   auto* cmd = base::CommandLine::ForCurrentProcess();
 
   // --js-flags.
@@ -276,6 +278,10 @@ v8::Isolate* JavascriptEnvironment::Initialize(uv_loop_t* event_loop) {
 
   v8::Isolate* isolate = v8::Isolate::Allocate();
   platform_->RegisterIsolate(isolate, event_loop);
+
+  if (setup_for_node)
+    node::SetIsolateUpForNode(isolate);
+
   g_isolate = isolate;
 
   return isolate;

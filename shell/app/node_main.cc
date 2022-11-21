@@ -190,9 +190,6 @@ int NodeMain(int argc, char* argv[]) {
           static_cast<node::EnvironmentFlags::Flags>(env_flags));
       CHECK_NE(nullptr, env);
 
-      node::IsolateSettings is;
-      node::SetIsolateUpForNode(isolate, is);
-
       gin_helper::Dictionary process(isolate, env->process_object());
       process.SetMethod("crash", &ElectronBindings::Crash);
 
